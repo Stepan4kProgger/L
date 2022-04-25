@@ -2,10 +2,10 @@ int task(List2*& b, List2*& e) {
     cout << "--List2-before--\n";
     ViewList(1, b);
 
-    List2* t = b, * t2 = t, * b2 = NULL, * e2 = NULL;
+    List2* t = b->next, * t2 = t, * b2 = NULL, * e2 = NULL;
     bool first = true;
     if (!b->next || !b->next->next) return -1;
-    t = b->next;
+    
     while (t && t->next && t->next != e) {
         t = t->next;
         t2 = t;
