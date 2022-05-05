@@ -1,16 +1,20 @@
-﻿#include <iostream>
+#include <iostream>
+#include <string>
 #include <conio.h>
 #include <Windows.h>
-using std::cin;
-using std::cout;
-using std::endl;
+using namespace std;
+
+struct info {
+    int num;
+    string name;
+};
 
 struct Tree {
-    int info;
+    info info;
     Tree* left, * right;
 };
 
-void CreateLeaf(Tree** tree, int value) {
+void CreateLeaf(Tree** tree, info value) {
     if (*tree == NULL) {
         *tree = new Tree;
         (*tree)->info = value;
@@ -18,12 +22,12 @@ void CreateLeaf(Tree** tree, int value) {
         return;
     }
     else {
-        if ((*tree)->info == value) {
-            cout << "Дерево не может содержать одинаковые элементы\n";
+        if ((*tree)->info.num == value.num) {
+            cout << "Дерево не может содержать одинаковые элементы! Добавление пропущено\n";
             return;
         }
         else {
-            if (value > (*tree)->info)
+            if (value.num > (*tree)->info.num)
                 CreateLeaf(&(*tree)->right, value);
             else
                 CreateLeaf(&(*tree)->left, value);
@@ -36,23 +40,23 @@ void ShowTree(Tree* tree, int level) {
         ShowTree(tree->right, level + 1);
         for (int i = 0; i < level; i++)
             cout << "   ";
-        cout << tree->info << '\n';
+        cout << tree->info.num << " - " << tree->info.name << endl;
         ShowTree(tree->left, level + 1);
     }
 }
 
-int TreeSearch(Tree* tree, int key, int& found) {
-    if ((tree) && (found == 0)) {
-        if (tree->info != key) {
+Tree* TreeSearch(Tree* tree, int key, Tree* found) {
+    if ((tree) && (found == NULL)) {
+        if (tree->info.num != key) {
             TreeSearch(tree->right, key, found);
             TreeSearch(tree->left, key, found);
         }
-        else found = 1;
+        else found = tree;
     }
     return found;
 }
 
-void BalanceTree(Tree** root, int* arr, int left, int right) {
+void BalanceTree(Tree** root, info* arr, int left, int right) {
     if (right < left)
         *root = NULL;
     else {
@@ -70,8 +74,8 @@ int DefineTreeSize(Tree* root) {
     return 0;
 }
 
-int* ConvertToArray(Tree* root) {
-    static int* arr = new int[DefineTreeSize(root)];
+info* ConvertToArray(Tree* root) {
+    static info* arr = new info[DefineTreeSize(root)];
     static int i = 0;
     if (root) {
         arr[i++] = root->info;
@@ -81,12 +85,13 @@ int* ConvertToArray(Tree* root) {
     return arr;
 }
 
-void SortValues(int* arr, int count) {
-    int min, buff;
+void SortValues(info* arr, int count) {
+    int min;
+    info buff;
     for (int i = 0; i < count - 1; i++) {
         min = i;
         for (int j = i + 1; j < count; j++)
-            if (arr[j] < arr[min])
+            if (arr[j].num < arr[min].num)
                 min = j;
         buff = arr[i];
         arr[i] = arr[min];
@@ -94,20 +99,19 @@ void SortValues(int* arr, int count) {
     }
 }
 
-Tree* DeleteFromTree(Tree* root, int key) {
+Tree* DeleteFromTree(Tree* root, int key, bool no_check = true) {
     Tree* toDelete, * parent, * r, * parent_r;
     toDelete = root;
     parent = NULL;
-    while (toDelete && toDelete->info != key) {
+    while (toDelete && toDelete->info.num != key) {
         parent = toDelete;
-        if (toDelete->info > key) toDelete = toDelete->left;
+        if (toDelete->info.num > key) toDelete = toDelete->left;
         else toDelete = toDelete->right;
     }
-    if (toDelete == NULL) {
+    if (toDelete == NULL && no_check) {
         cout << "Данное значение не найдено\n";
         return root;
     }
-
     if (toDelete->right == NULL)
         r = toDelete->left;
     else {
@@ -132,7 +136,7 @@ Tree* DeleteFromTree(Tree* root, int key) {
     if (toDelete == root)
         root = r;
     else {
-        if (toDelete->info < parent->info)
+        if (toDelete->info.num < parent->info.num)
             parent->left = r;
         else
             parent->right = r;
@@ -144,13 +148,13 @@ Tree* DeleteFromTree(Tree* root, int key) {
 void LeftRootRight(Tree* tree) {
     if (tree->left != NULL)
         LeftRootRight(tree->left);
-    cout << tree->info << " ";
+    cout << tree->info.num + ", " + tree->info.name << endl;
     if (tree->right != NULL)
         LeftRootRight(tree->right);
 }
 
 void RootLeftRight(Tree* tree) {
-    cout << tree->info << " ";
+    cout << tree->info.num + ", " + tree->info.name << endl;
     if (tree->left != NULL)
         RootLeftRight(tree->left);
     if (tree->right != NULL)
@@ -162,31 +166,26 @@ void LeftRightRoot(Tree* tree) {
         LeftRightRoot(tree->left);
     if (tree->right != NULL)
         LeftRightRoot(tree->right);
-    cout << tree->info << " ";
+    cout << tree->info.num + ", " + tree->info.name << endl;
 }
 
-void FindLevelCount(Tree* tree, int* mass, int level) {
-    if (tree) {
-        FindLevelCount(tree->left, mass, level + 1);
-        FindLevelCount(tree->right, mass, level + 1);
-        mass[level]++;
-    }
+Tree* getParent(Tree* root, Tree* key) {
+    if (root == NULL) return NULL;
+    else if (root->right == key || root->left == key) return root;
+    else if (root->info.num > key->info.num) return getParent(root->left, key);
+    else return getParent(root->right, key);
 }
 
-int FindMaxDeepness(Tree* tree, int level) {
-    if (tree != NULL) {
-        int l, r;
-        l = r = level;
-        if (tree->left != NULL)
-            l = FindMaxDeepness(tree->left, level + 1);
-        if (tree->right != NULL)
-            r = FindMaxDeepness(tree->right, level + 1);
-        if (l > r)
-            return l;
-        else
-            return r;
-    }
-    return level;
+Tree* DelIndivid(Tree* root, Tree* target) {
+    Tree* parent = getParent(root, target);
+    if (target->left)
+        root = DeleteFromTree(root, target->left->info.num, false);
+    if (target->right)
+        root = DeleteFromTree(root, target->right->info.num, false);
+    root = DeleteFromTree(root, target->info.num, false);
+    if (parent)
+        root = DeleteFromTree(root, parent->info.num, false);
+    return root;
 }
 
 void DeleteTree(Tree* root) {
@@ -201,8 +200,10 @@ void main() {
     SetConsoleCP(1251);
     SetConsoleOutputCP(1251);
     Tree* root = NULL;
-    int choice, count, deep, found = 0;
     while (true) {
+        int sw, key, count, deep;
+        Tree* target = NULL, * found = NULL;
+        info elem;
         system("cls");
         cout << "Выберите действие:\n\n"
             << "\t1 - Добавить элементы в дерево\n"
@@ -211,26 +212,26 @@ void main() {
             << "\t4 - Балансировка дерева\n"
             << "\t5 - Удалить элемент из дерева\n"
             << "\t6 - Опциональное отображение дерева\n"
-            << "\t7 - Количество узлов(негфнеывнфеыв)\n"
-            << "\tESC - Выйти\n";
-        cin >> choice;
+            << "\t7 - Удалить из левой ветви дерева узел с макс знач и все связные с ним узлы\n"
+            << "\t0 - Выйти\n";
+        cin >> sw;
         cout << endl;
-        if (root == NULL && choice > 1 && choice < 8) {
-            cout << "Перед работой, создайте дерево.\n";
+        if (root == NULL && sw > 1 && sw < 8) {
+            cout << "Перед работой необходимо сформировать дерево.\n";
+            system("pause");
             continue;
         }
-        switch (choice) {
-        default:
-            cout << "Куда ты клацаешь, тут такого нет!";
-            break;
+        switch (sw) {
         case 1:
             cout << "Введите количество элементов, которых вы хотите добавить\n";
             cin >> count;
-            for (int i = 0; i < count; i++)
-            {
-                cout << "Введите значение [" << i + 1 << "] элемента: ";
-                cin >> choice;
-                CreateLeaf(&root, choice);
+            for (int i = 0; i < count; i++) {
+                cout << "Введите числовое значение [" << i + 1 << "] элемента: ";
+                cin >> elem.num;
+                cout << "Теперь, введите его имя: ";
+                cin.ignore(123, '\n');
+                getline(cin, elem.name);
+                CreateLeaf(&root, elem);
             }
             break;
         case 2:
@@ -238,65 +239,58 @@ void main() {
             break;
         case 3:
         {
-            cout << "Введите элемент, который необходимо найти";
-            cin >> choice;
-            found = TreeSearch(root, choice, found);
-            if (found == 1)
-            {
-                cout << choice << " обнаружен в дереве";
-                found = 0;
-            }
+            cout << "Введите числовое значение элементa, которое необходимо найти\n";
+            cin >> key;
+            Tree* found = NULL;
+            found = TreeSearch(root, key, found);
+            if (found)
+                cout << '\"' << found->info.num << " - " << found->info.name << "\" обнаружен в дереве\n";
             else
-                cout << choice << " НЕ находится в дереве";
+                cout << "Элемент со значением " << key << " НЕ находится в дереве\n";
             break;
         }
         case 4:
         {
             Tree* newRoot = NULL;
-            int* arr = ConvertToArray(root);
+            info* arr = ConvertToArray(root);
             SortValues(arr, DefineTreeSize(root));
             BalanceTree(&newRoot, arr, 0, DefineTreeSize(root) - 1);
             ShowTree(newRoot, 0);
             DeleteTree(newRoot);
+            cout << "\nСбалансированное дерево (от корня к крайним элементам - от левого края окна к правой стороне)\n";
             break;
         }
         case 5:
         {
-            cout << "Введите элемент для удаления";
-            cin >> choice;
-            root = DeleteFromTree(root, choice);
+            cout << "Введите значение элемента для удаления: ";
+            cin >> key;
+            root = DeleteFromTree(root, key);
             break;
         }
         case 6:
             cout << "Каким образом отобразить дерево?\n 1 - Лево->Корень->Право\n 2 - Корень->Лево->Право\n 3 Лево->Право->Корень\n  ";
-            cin >> choice;
-            switch (choice)
-            {
-            default:
-                cout << "Выбрана ошибочная опция\n";
-                break;
-            case 1:
+            cin >> sw;
+            if(sw == 1)
                 LeftRootRight(root);
-                break;
-            case 2:
+            else if (sw == 2)
                 RootLeftRight(root);
-                break;
-            case 3:
+            else if (sw == 3)
                 LeftRightRoot(root);
-                break;
-            }
             break;
         case 7:
-            deep = FindMaxDeepness(root, 0);
-            int newarr[20];
-            for (int i = 0; i < 20; i++)
-                newarr[i] = 0;
-            FindLevelCount(root, newarr, 0);
-            for (int i = 0; i <= deep; i++)
-                cout << i + 1 << " уровень. " << newarr[i] << '\n';
+            cout << "Введите значение элемента для операции: ";
+            cin >> key;
+            
+            target = TreeSearch(root, key, target);
+            if (target == NULL) {
+                cout << "Не удалось найти элемент\n";
+                break;
+            }
+            root = DelIndivid(root, target);
+            cout << "Операция произведена успешно\n";
             break;
-        case 8:
-            if (root != NULL)
+        case 0:
+            if (root)
                 DeleteTree(root);
             return;
         }
