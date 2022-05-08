@@ -1,5 +1,4 @@
 #include <iostream>
-#include <conio.h>
 #include <Windows.h>
 using namespace std;
 
@@ -95,74 +94,59 @@ void SortValues(int* arr, int count) {
     }
 }
 
-Tree* DeleteFromTree(Tree* root, int key, bool no_check = true) {
-    Tree* toDelete, * parent, * r, * parent_r;
-    toDelete = root;
-    parent = NULL;
-    while (toDelete && toDelete->key != key) {
-        parent = toDelete;
-        if (toDelete->key > key) toDelete = toDelete->left;
-        else toDelete = toDelete->right;
-    }
-    if (toDelete == NULL && no_check) {
-        cout << "Данное значение не найдено\n";
+Tree* DeleteFromTree(Tree* root, int key) {
+    if (root == NULL)
         return root;
-    }
-    if (toDelete->right == NULL)
-        r = toDelete->left;
-    else {
-        if (toDelete->left == NULL)
-            r = toDelete->right;
+
+    if (key == root->key) {
+
+        Tree* tmp;
+        if (root->right == NULL)
+            tmp = root->left;
         else {
-            parent_r = toDelete;
-            r = toDelete->left;
-            while (r->right) {
-                parent_r = r;
-                r = r->right;
+
+            Tree* ptr = root->right;
+            if (ptr->left == NULL) {
+                ptr->left = root->left;
+                tmp = ptr;
             }
-            if (parent_r == toDelete)
-                r->right = toDelete->right;
             else {
-                r->right = toDelete->right;
-                parent_r->right = r->left;
-                r->left = parent_r;
+
+                Tree* pmin = ptr->left;
+                while (pmin->left != NULL) {
+                    ptr = pmin;
+                    pmin = ptr->left;
+                }
+                ptr->left = pmin->right;
+                pmin->left = root->left;
+                pmin->right = root->right;
+                tmp = pmin;
             }
         }
+        delete root;
+        return tmp;
     }
-    if (toDelete == root)
-        root = r;
-    else {
-        if (toDelete->key < parent->key)
-            parent->left = r;
-        else
-            parent->right = r;
-    }
-    delete toDelete;
+    else if (key < root->key)
+        root->left = DeleteFromTree(root->left, key);
+    else
+        root->right = DeleteFromTree(root->right, key);
     return root;
 }
 
 void LeftRootRight(Tree* tree) {
     if (tree->left != NULL)
         LeftRootRight(tree->left);
-    cout << tree->key << endl;
+    cout << tree->key << ' ';
     if (tree->right != NULL)
         LeftRootRight(tree->right);
 }
 
-void RootLeftRight(Tree* tree) {
-    cout << tree->key << endl;
-    if (tree->left != NULL)
-        RootLeftRight(tree->left);
+void RightRootLeft(Tree* tree) {
     if (tree->right != NULL)
-        RootLeftRight(tree->right);
-}
-
-void LeftRightRoot(Tree* tree) {
+        RightRootLeft(tree->right);
+    cout << tree->key << ' ';
     if (tree->left != NULL)
-        LeftRightRoot(tree->left);
-    if (tree->right != NULL)
-        LeftRightRoot(tree->right);
-    cout << tree->key << endl;
+        RightRootLeft(tree->left);
 }
 
 Tree* getParent(Tree* root, int key) {
@@ -199,7 +183,7 @@ Tree* DelIndivid(Tree* root, int target) {
         val[3] = maxel->right->key;
     for (int i = 0; i < 4; i++) {
         if (val[i] == INT_MIN) continue;
-        root = DeleteFromTree(root, val[i], false);
+        root = DeleteFromTree(root, val[i]);
     }
     return root;
 }
@@ -214,6 +198,7 @@ void DeleteTree(Tree* root) {
 
 void main() {
     SetConsoleOutputCP(1251);
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 112);
     Tree* root = NULL;
     while (true) {
         int sw, key, count, max, elem;
@@ -281,22 +266,20 @@ void main() {
             break;
         }
         case 6:
-            cout << "Каким образом отобразить дерево?\n 1 - Лево->Корень->Право\n 2 - Корень->Лево->Право\n 3 Лево->Право->Корень\n  ";
+            cout << "Каким образом отобразить дерево?\n 1 - Лево->Корень->Право\n 2 - Право->Корень->Лево\n  ";
             cin >> sw;
             if(sw == 1)
                 LeftRootRight(root);
             else if (sw == 2)
-                RootLeftRight(root);
-            else if (sw == 3)
-                LeftRightRoot(root);
+                RightRootLeft(root);
             break;
         case 7:
             max = findMax(root->left);
-            if (TreeSearch(root->left, max, found)) {
+            if (max == INT_MIN) {
                 cout << "Не удалось найти элемент\n";
                 break;
             }
-            root = DelIndivid(root, max);
+            root = DelIndivid(root->left, max);
             cout << "Операция произведена успешно\n";
             break;
         case 0:
